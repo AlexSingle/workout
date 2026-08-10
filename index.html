@@ -191,6 +191,27 @@ h1.day-title {
   font-size: 0.875rem;
   color: var(--muted);
 }
+/* Правка на случай, когда трекер разошёлся с реальностью:
+   тренировался без телефона, забыл отметить и т.п. */
+.switch-complex {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  font-family: 'PT Sans', sans-serif;
+  font-size: 0.8125rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+}
+/* display выше перебил бы атрибут hidden — возвращаем ему силу */
+.switch-complex[hidden] { display: none; }
+.switch-complex:hover { color: var(--ink); border-color: var(--muted); }
+.switch-complex:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .sync-status {
   margin: 0;
   font-size: 0.75rem;
@@ -434,6 +455,7 @@ footer.credit {
       <span class="progress-chip" id="progress-chip"></span>
     </div>
     <p class="reason" id="reason-text"></p>
+    <button type="button" class="switch-complex" id="switch-complex" hidden></button>
     <p class="sync-status" id="sync-status"><span class="sync-dot"></span><span id="sync-text">—</span></p>
   </header>
 
@@ -709,8 +731,10 @@ function render() {
   const titleEl = document.getElementById('day-title');
   const reasonEl = document.getElementById('reason-text');
   const chip = document.getElementById('progress-chip');
+  const switchBtn = document.getElementById('switch-complex');
   const content = document.getElementById('content');
   content.innerHTML = '';
+  switchBtn.hidden = true;
 
   if (entry.type === 'rest') {
     titleEl.textContent = 'День отдыха';
@@ -756,6 +780,17 @@ function render() {
   const complex = entry.complex === 'A' ? COMPLEX_A : COMPLEX_B;
   titleEl.textContent = `Силовая — комплекс ${entry.complex}`;
   reasonEl.textContent = entry.reason || '';
+
+  // Отметки другого комплекса не стираем: переключил по ошибке — вернулся, ничего не потерял.
+  const other = entry.complex === 'A' ? 'B' : 'A';
+  switchBtn.hidden = false;
+  switchBtn.textContent = `Переключить на комплекс ${other}`;
+  switchBtn.onclick = () => {
+    entry.complex = other;
+    entry.reason = `Комплекс ${other} — выбран вручную.`;
+    render();
+    scheduleSave();
+  };
 
   const warmup = document.createElement('details');
   warmup.className = 'ref';
