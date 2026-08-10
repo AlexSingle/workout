@@ -244,44 +244,6 @@ h1.day-title {
 .sync-status.warn .sync-dot { background: var(--warn); }
 .sync-status.warn { color: var(--warn); }
 
-/* ---- reference (warmup/cooldown) ---- */
-details.ref {
-  background: var(--surface);
-  border-radius: 14px;
-  box-shadow: var(--shadow);
-  padding: 0.2rem 1.1rem;
-}
-details.ref summary {
-  cursor: pointer;
-  padding: 0.85rem 0;
-  font-family: 'Oswald', sans-serif;
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 0.9rem;
-  letter-spacing: 0.03em;
-  color: var(--muted);
-  list-style: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-details.ref summary::-webkit-details-marker { display: none; }
-details.ref summary::after {
-  content: '+';
-  font-family: 'PT Mono', monospace;
-  font-size: 1.1rem;
-  color: var(--muted);
-}
-details.ref[open] summary::after { content: '\2212'; }
-.ref-body {
-  padding: 0 0 1rem;
-  font-size: 0.9rem;
-  color: var(--ink);
-}
-.ref-body p { margin: 0 0 0.6rem; }
-.ref-body ul { margin: 0.3rem 0 0.8rem; padding-left: 1.1rem; }
-.ref-body li { margin-bottom: 0.3rem; }
-
 /* ---- blocks ---- */
 .block {
   background: var(--surface);
@@ -317,6 +279,14 @@ details.ref[open] summary::after { content: '\2212'; }
   font-size: 0.95rem;
   flex: 1;
   text-wrap: balance;
+}
+/* Разминка и заминка обрамляют тренировку, а не входят в нумерацию суперсетов */
+.block-head.frame h3 {
+  font-family: 'Oswald', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 0.9rem;
+  color: var(--muted);
 }
 .block-rounds {
   font-family: 'PT Mono', monospace;
@@ -590,30 +560,72 @@ const COMPLEX_B = {
   ]
 };
 
-const WARMUP_HTML = `
-  <p><b>Общий разогрев — 5 мин.</b> Велосипед или эллипс в лёгком темпе. Цель — поднять пульс и температуру мышц, а не устать. Должно стать тепло, появиться лёгкая испарина.</p>
-  <p><b>Суставная мобильность — 2 мин</b>, без веса, по 8–10 движений на каждое:</p>
-  <ul>
-    <li>Круги руками — вперёд и назад, большая амплитуда</li>
-    <li>Вращения плечами — вверх-назад-вниз по кругу</li>
-    <li>Наклоны таза стоя — «поджал хвост» → прогнулся, туда-обратно</li>
-    <li>Полуприседы — 10 раз без веса, неглубоко</li>
-    <li>Круги бедром — колено поднял → отвёл в сторону → опустил</li>
-  </ul>
-  <p><b>Подводящий подход:</b> первое упражнение комплекса — один раз с очень лёгким весом на 10 повторений, в план не засчитывается. Для остальных упражнений не нужно.</p>
-`;
+// Разминка и заминка одинаковы для обоих комплексов, поэтому их id
+// не привязаны к букве — переключение комплекса их не сбрасывает.
+const WARMUP = {
+  title: 'Разминка',
+  meta: '7–8 мин',
+  items: [
+    { id: 'w1', name: 'Общий разогрев', reps: '5 мин',
+      detail: '<p>Велосипед или эллипс в лёгком темпе. Цель — поднять пульс и температуру мышц, а не устать. Должно стать тепло, появиться лёгкая испарина.</p>' },
+    { id: 'w2', name: 'Суставная мобильность', reps: '2 мин',
+      detail: `<p>Без веса, по 8–10 движений на каждое:</p>
+        <ul>
+          <li>Круги руками — вперёд и назад, большая амплитуда</li>
+          <li>Вращения плечами — вверх-назад-вниз по кругу</li>
+          <li>Наклоны таза стоя — «поджал хвост» → прогнулся, туда-обратно</li>
+          <li>Полуприседы — 10 раз без веса, неглубоко</li>
+          <li>Круги бедром — колено поднял → отвёл в сторону → опустил</li>
+        </ul>` },
+    // name подставляется в render() — это первое упражнение текущего комплекса
+    { id: 'w3', name: 'Подводящий подход', reps: '10 раз', leadIn: true,
+      detail: '<p>Очень лёгкий вес, один подход. Это не рабочий подход, а настройка на движение — в план он не засчитывается. Для остальных упражнений не нужен.</p>' },
+  ]
+};
 
-const COOLDOWN_HTML = `
-  <p><b>Ходьба в горку — 15 мин.</b> Как сейчас, менять не нужно.</p>
-  <p><b>Растяжка — 3–4 мин.</b> Каждое положение 30 секунд, без пружинистых движений, до натяжения, но не боли. Только после ходьбы, пока мышцы тёплые.</p>
-  <ul>
-    <li>Задняя поверхность бедра — нога на невысокой опоре, наклон вперёд с прямой спиной</li>
-    <li>Квадрицепс — стоя, пятку к ягодице, колено смотрит вниз</li>
-    <li>Грудные — предплечье на стойке или дверном проёме, поворот корпуса</li>
-    <li>Широчайшие — взялся за стойку, отвёл таз назад, повис на прямых руках</li>
-    <li>Сгибатели бедра — выпад с задним коленом на коврике, таз подаёшь вперёд</li>
-  </ul>
-`;
+const COOLDOWN = {
+  title: 'Заминка',
+  meta: '18–19 мин',
+  note: 'Растяжку делай только после ходьбы, пока мышцы тёплые. Каждое положение 30 секунд неподвижно, без пружинистых движений — тянуть должно ощутимо, но не до боли.',
+  items: [
+    { id: 'c1', name: 'Ходьба в горку', reps: '15 мин',
+      detail: `<dl>
+          <dt>Зачем</dt><dd>Плавно снять пульс после силовой и разогнать кровь по мышцам, а не добавить ещё нагрузки.</dd>
+          <dt>Как</dt><dd>Дорожка с наклоном 6–10%, скорость такая, чтобы мог спокойно говорить, не задыхаясь (примерно 4–5 км/ч). Руки свободны, шаг обычный.</dd>
+          <dt>Ошибки</dt><dd>Держаться за поручни — так уходит половина смысла · слишком быстрый темп: это заминка, а не ещё одна тренировка</dd>
+        </dl>` },
+    { id: 'c2', name: 'Растяжка: задняя поверхность бедра', reps: '30 сек на ногу',
+      detail: `<dl>
+          <dt>Мышцы</dt><dd>Бицепс бедра, отчасти икра</dd>
+          <dt>Техника</dt><dd>Поставь пятку на невысокую опору — степ, нижняя ступень, край тренажёра. Нога прямая, носок тяни на себя. Спину держи прямой и наклоняйся вперёд от таза, а не скругляя поясницу. Тянуть должно по задней поверхности бедра.</dd>
+          <dt>Ошибки</dt><dd>Круглая спина — тогда тянется поясница, а не бедро · слишком высокая опора · согнутое колено</dd>
+        </dl>` },
+    { id: 'c3', name: 'Растяжка: квадрицепс', reps: '30 сек на ногу',
+      detail: `<dl>
+          <dt>Мышцы</dt><dd>Передняя поверхность бедра</dd>
+          <dt>Техника</dt><dd>Стоя, придерживайся рукой за стойку для равновесия. Согни ногу, возьми стопу одноимённой рукой и подтяни пятку к ягодице. Колено смотрит строго вниз и держится рядом со вторым коленом, таз подкручен под себя.</dd>
+          <dt>Ошибки</dt><dd>Колено уезжает в сторону или вперёд · прогиб в пояснице вместо подкрученного таза · дёргать стопу рывком</dd>
+        </dl>` },
+    { id: 'c4', name: 'Растяжка: грудные', reps: '30 сек на сторону',
+      detail: `<dl>
+          <dt>Мышцы</dt><dd>Большая грудная, передняя дельта</dd>
+          <dt>Техника</dt><dd>Встань боком к стойке или дверному проёму. Прижми предплечье к поверхности: плечо примерно на уровне плечевого сустава, локоть согнут под 90°. Медленно поворачивай корпус в сторону от руки, пока не почувствуешь натяжение по груди.</dd>
+          <dt>Ошибки</dt><dd>Локоть выше плеча — нагружает сустав · поворот рывком · выгибание поясницы вместо поворота грудного отдела</dd>
+        </dl>` },
+    { id: 'c5', name: 'Растяжка: широчайшие', reps: '30 сек',
+      detail: `<dl>
+          <dt>Мышцы</dt><dd>Широчайшие, круглые мышцы спины</dd>
+          <dt>Техника</dt><dd>Возьмись обеими руками за стойку на уровне пояса. Отведи таз назад и «повисни» на прямых руках, голова между руками, спина длинная. Тянет по бокам корпуса от подмышки вниз. Чтобы усилить с одной стороны — слегка сместись тазом в противоположную.</dd>
+          <dt>Ошибки</dt><dd>Согнутые локти · скругление поясницы вместо вытяжения спины</dd>
+        </dl>` },
+    { id: 'c6', name: 'Растяжка: сгибатели бедра', reps: '30 сек на ногу',
+      detail: `<dl>
+          <dt>Мышцы</dt><dd>Подвздошно-поясничная, верх передней поверхности бедра</dd>
+          <dt>Техника</dt><dd>Встань в выпад, заднее колено на коврике. Сначала подкрути таз под себя — как будто поджал хвост, — и только потом мягко подай таз вперёд. Корпус вертикально. Тянет спереди у паха задней ноги.</dd>
+          <dt>Ошибки</dt><dd>Прогиб в пояснице — тогда тянется поясница, а не сгибатель · слишком широкий выпад · заваливаться вперёд на руки</dd>
+        </dl>` },
+  ]
+};
 
 let state = { days: {} };
 let todayKey = '';
@@ -705,13 +717,12 @@ function ensureToday(dateKey, weekday) {
       complex = 'A';
       reason = 'Комплекс A — начинаем цикл.';
     } else {
-      const hadAny = Object.values(last.entry.checked || {}).some(Boolean);
-      if (hadAny) {
+      if (didAnyExercise(last.entry)) {
         complex = last.entry.complex === 'A' ? 'B' : 'A';
         reason = `Комплекс ${complex} — чередуем, в прошлый раз (${formatShortDate(last.key)}) было отмечено хотя бы одно упражнение.`;
       } else {
         complex = last.entry.complex;
-        reason = `Комплекс ${complex} — повторяем, в прошлый раз (${formatShortDate(last.key)}) ничего не отмечено.`;
+        reason = `Комплекс ${complex} — повторяем, в прошлый раз (${formatShortDate(last.key)}) не отмечено ни одного упражнения.`;
       }
     }
     entry = { type: 'strength', complex, checked: {}, reason };
@@ -725,11 +736,19 @@ function formatShortDate(key) {
   return `${d} ${MONTH_RU[m - 1]}`;
 }
 
+// Чередование комплексов смотрит только на сами упражнения (a1…/b1…):
+// отметил разминку и ушёл из зала — тренировка не считается сделанной.
+function didAnyExercise(entry) {
+  return Object.entries(entry.checked || {}).some(([id, done]) => done && /^[ab]\d+$/.test(id));
+}
+
 function countProgress(entry) {
   let ids = [];
   if (entry.type === 'strength') {
     const complex = entry.complex === 'A' ? COMPLEX_A : COMPLEX_B;
+    ids = ids.concat(WARMUP.items.map(i => i.id));
     complex.blocks.forEach(b => b.exercises.forEach(e => ids.push(e.id)));
+    ids = ids.concat(COOLDOWN.items.map(i => i.id));
   } else if (entry.type === 'cardio') {
     ids = ['cardio'];
   }
@@ -811,10 +830,9 @@ function render() {
     scheduleSave();
   };
 
-  const warmup = document.createElement('details');
-  warmup.className = 'ref';
-  warmup.innerHTML = `<summary>Разминка · 7–8 мин</summary><div class="ref-body">${WARMUP_HTML}</div>`;
-  content.appendChild(warmup);
+  // Подводящий подход — к первому упражнению именно этого комплекса
+  const leadInName = complex.blocks[0].exercises[0].name;
+  content.appendChild(frameBlock(WARMUP, entry, leadInName));
 
   complex.blocks.forEach((block, bi) => {
     const sec = document.createElement('section');
@@ -830,43 +848,65 @@ function render() {
     `;
     const exWrap = sec.querySelector('.exercises');
     block.exercises.forEach(ex => {
-      const isDone = !!(entry.checked && entry.checked[ex.id]);
-      const exDiv = document.createElement('div');
-      exDiv.className = 'exercise';
-      exDiv.innerHTML = `
-        <label class="ex-row ${isDone ? 'done' : ''}">
-          <input type="checkbox" class="ex-check" data-id="${ex.id}" ${isDone ? 'checked' : ''} />
-          <span class="ex-check-box">${CHECK_SVG}</span>
-          <span class="ex-name">${ex.name}</span>
-          <span class="ex-reps">${ex.reps}</span>
-        </label>
-        <details class="ex-details">
-          <summary>Как делать</summary>
-          <div class="ex-detail-body">
-            <dl>
-              <dt>Мышцы</dt><dd>${ex.muscles}</dd>
-              <dt>Техника</dt><dd>${ex.technique}</dd>
-              <dt>Ошибки</dt><dd>${ex.mistakes}</dd>
-            </dl>
-            ${ex.replacement ? `<div class="replacement"><b>Если занято:</b> ${ex.replacement}</div>` : ''}
-          </div>
-        </details>
-      `;
-      exWrap.appendChild(exDiv);
-      const cb = exDiv.querySelector('.ex-check');
-      cb.addEventListener('change', (e) => {
-        entry.checked[ex.id] = e.target.checked;
-        render();
-        scheduleSave();
-      });
+      exWrap.appendChild(checkRow(entry, ex, `
+        <dl>
+          <dt>Мышцы</dt><dd>${ex.muscles}</dd>
+          <dt>Техника</dt><dd>${ex.technique}</dd>
+          <dt>Ошибки</dt><dd>${ex.mistakes}</dd>
+        </dl>
+        ${ex.replacement ? `<div class="replacement"><b>Если занято:</b> ${ex.replacement}</div>` : ''}
+      `));
     });
     content.appendChild(sec);
   });
 
-  const cooldown = document.createElement('details');
-  cooldown.className = 'ref';
-  cooldown.innerHTML = `<summary>Заминка</summary><div class="ref-body">${COOLDOWN_HTML}</div>`;
-  content.appendChild(cooldown);
+  content.appendChild(frameBlock(COOLDOWN, entry, leadInName));
+}
+
+// Строка с галочкой — одна и та же для упражнений, разминки и заминки
+function checkRow(entry, item, detailHtml) {
+  const isDone = !!(entry.checked && entry.checked[item.id]);
+  const div = document.createElement('div');
+  div.className = 'exercise';
+  div.innerHTML = `
+    <label class="ex-row ${isDone ? 'done' : ''}">
+      <input type="checkbox" class="ex-check" data-id="${item.id}" ${isDone ? 'checked' : ''} />
+      <span class="ex-check-box">${CHECK_SVG}</span>
+      <span class="ex-name">${item.name}</span>
+      <span class="ex-reps">${item.reps}</span>
+    </label>
+    ${detailHtml ? `
+      <details class="ex-details">
+        <summary>Как делать</summary>
+        <div class="ex-detail-body">${detailHtml}</div>
+      </details>` : ''}
+  `;
+  div.querySelector('.ex-check').addEventListener('change', (e) => {
+    entry.checked[item.id] = e.target.checked;
+    render();
+    scheduleSave();
+  });
+  return div;
+}
+
+// Разминка и заминка: обрамляют тренировку, поэтому без номера суперсета
+function frameBlock(block, entry, leadInName) {
+  const sec = document.createElement('section');
+  sec.className = 'block';
+  sec.innerHTML = `
+    <div class="block-head frame">
+      <h3>${block.title}</h3>
+      <span class="block-rounds">${block.meta}</span>
+    </div>
+    ${block.note ? `<p class="block-note">${block.note}</p>` : ''}
+    <div class="exercises"></div>
+  `;
+  const wrap = sec.querySelector('.exercises');
+  block.items.forEach(item => {
+    const shown = item.leadIn ? { ...item, name: `${item.name}: ${leadInName}` } : item;
+    wrap.appendChild(checkRow(entry, shown, item.detail || ''));
+  });
+  return sec;
 }
 
 async function init() {
