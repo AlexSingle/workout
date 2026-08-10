@@ -1,3 +1,17 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#EDEFF0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#15181B" media="(prefers-color-scheme: dark)">
+<!-- С домашнего экрана открывается без адресной строки, как приложение -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Тренировка">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png" sizes="180x180" type="image/png">
 <title>Тренировка сегодня</title>
 <style>
 @font-face {
@@ -113,6 +127,8 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
+/* Без этого iOS раздувает текст при повороте в ландшафт */
+html { -webkit-text-size-adjust: 100%; }
 body {
   background: var(--bg);
   color: var(--ink);
@@ -378,6 +394,7 @@ details.ex-details summary::-webkit-details-marker { display: none; }
   font-size: 0.875rem;
   color: var(--ink);
 }
+.ex-detail-body dl { margin: 0; }
 .ex-detail-body dt {
   font-family: 'PT Mono', monospace;
   font-size: 0.7rem;
@@ -443,6 +460,8 @@ footer.credit {
   padding-top: 0.5rem;
 }
 </style>
+</head>
+<body>
 
 <div class="wrap">
   <header class="page-head">
@@ -886,3 +905,6 @@ async function init() {
 
 init();
 </script>
+
+</body>
+</html>
