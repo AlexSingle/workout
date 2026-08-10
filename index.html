@@ -861,7 +861,8 @@ function render() {
     `;
     content.appendChild(card);
     document.getElementById('cardio-check').addEventListener('change', (e) => {
-      entry.checked.cardio = e.target.checked;
+      if (e.target.checked) entry.checked.cardio = true;
+      else delete entry.checked.cardio;
       document.getElementById('cardio-label').classList.toggle('done', e.target.checked);
       render();
       scheduleSave();
@@ -934,7 +935,9 @@ function checkRow(entry, item, detailHtml) {
       </details>` : ''}
   `;
   div.querySelector('.ex-check').addEventListener('change', (e) => {
-    entry.checked[item.id] = e.target.checked;
+    // Снятую галочку убираем совсем, иначе в состоянии копятся false
+    if (e.target.checked) entry.checked[item.id] = true;
+    else delete entry.checked[item.id];
     render();
     scheduleSave();
   });
