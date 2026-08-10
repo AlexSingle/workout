@@ -257,7 +257,22 @@ h1.day-title {
   gap: 0.65rem;
   padding: 0.9rem 1.1rem;
   border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  list-style: none;
+  -webkit-tap-highlight-color: transparent;
 }
+.block-head::-webkit-details-marker { display: none; }
+.block-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+/* Свёрнутый блок — нижняя граница висела бы без содержимого */
+.block:not([open]) .block-head { border-bottom-color: transparent; }
+.chev {
+  width: 12px;
+  height: 8px;
+  flex: none;
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+.block[open] .chev { transform: rotate(180deg); }
 .block-num {
   font-family: 'Oswald', sans-serif;
   font-weight: 700;
@@ -288,6 +303,12 @@ h1.day-title {
   font-size: 0.9rem;
   color: var(--muted);
 }
+/* Блок пройден целиком */
+.block-num.done {
+  background: var(--good-bg);
+  color: var(--good);
+}
+.block-head.frame.done h3 { color: var(--good); }
 .block-rounds {
   font-family: 'PT Mono', monospace;
   font-size: 0.75rem;
@@ -365,6 +386,8 @@ details.ex-details summary::-webkit-details-marker { display: none; }
   color: var(--ink);
 }
 .ex-detail-body dl { margin: 0; }
+.ex-detail-body ul { margin: 0.35rem 0 0; padding-left: 1.1rem; }
+.ex-detail-body li { margin-bottom: 0.25rem; }
 .ex-detail-body dt {
   font-family: 'PT Mono', monospace;
   font-size: 0.7rem;
@@ -471,7 +494,9 @@ function readAccessKey() {
 }
 const accessKey = readAccessKey();
 
-const CHECK_SVG = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8.5L6.2 11.5L13 4.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="stroke:var(--accent-ink)"/></svg>';
+const CHEVRON_SVG = '<svg class="chev" viewBox="0 0 12 8" aria-hidden="true"><path d="M1.5 1.5 6 6 10.5 1.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+const CHECK_SVG ='<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8.5L6.2 11.5L13 4.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="stroke:var(--accent-ink)"/></svg>';
 
 const COMPLEX_A = {
   label: 'A',
@@ -567,19 +592,31 @@ const WARMUP = {
   meta: '7–8 мин',
   items: [
     { id: 'w1', name: 'Общий разогрев', reps: '5 мин',
-      detail: '<p>Велосипед или эллипс в лёгком темпе. Цель — поднять пульс и температуру мышц, а не устать. Должно стать тепло, появиться лёгкая испарина.</p>' },
+      detail: `<dl>
+          <dt>Зачем</dt><dd>Поднять пульс и температуру мышц, чтобы связки и суставы работали мягче под весом.</dd>
+          <dt>Как</dt><dd>Велосипед или эллипс в лёгком темпе. Должно стать тепло, появиться лёгкая испарина, дыхание чуть чаще — но говорить по-прежнему легко.</dd>
+          <dt>Ошибки</dt><dd>Работать в полную силу — разминка не должна съедать силы до подходов · сокращать её в холодном зале, когда она нужна как раз больше</dd>
+        </dl>` },
     { id: 'w2', name: 'Суставная мобильность', reps: '2 мин',
-      detail: `<p>Без веса, по 8–10 движений на каждое:</p>
-        <ul>
-          <li>Круги руками — вперёд и назад, большая амплитуда</li>
-          <li>Вращения плечами — вверх-назад-вниз по кругу</li>
-          <li>Наклоны таза стоя — «поджал хвост» → прогнулся, туда-обратно</li>
-          <li>Полуприседы — 10 раз без веса, неглубоко</li>
-          <li>Круги бедром — колено поднял → отвёл в сторону → опустил</li>
-        </ul>` },
-    // name подставляется в render() — это первое упражнение текущего комплекса
+      detail: `<dl>
+          <dt>Зачем</dt><dd>Прогнать суставы через полную амплитуду до того, как в них появится вес.</dd>
+          <dt>Как</dt><dd>Без веса, по 8–10 движений на каждое:
+            <ul>
+              <li><b>Круги руками</b> — вперёд и назад, амплитуда максимальная</li>
+              <li><b>Вращения плечами</b> — вверх, назад, вниз по кругу, руки расслаблены</li>
+              <li><b>Наклоны таза стоя</b> — «поджал хвост» → прогнулся в пояснице, туда-обратно</li>
+              <li><b>Полуприседы</b> — неглубоко, спина прямая, колени по линии носков</li>
+              <li><b>Круги бедром</b> — колено поднял вперёд → отвёл в сторону → опустил</li>
+            </ul></dd>
+          <dt>Ошибки</dt><dd>Рывки и пружинистые движения · маленькая амплитуда «для галочки» — тогда смысла нет</dd>
+        </dl>` },
+    // name дополняется в render() первым упражнением текущего комплекса
     { id: 'w3', name: 'Подводящий подход', reps: '10 раз', leadIn: true,
-      detail: '<p>Очень лёгкий вес, один подход. Это не рабочий подход, а настройка на движение — в план он не засчитывается. Для остальных упражнений не нужен.</p>' },
+      detail: `<dl>
+          <dt>Зачем</dt><dd>Пройти движение налегке: поймать технику и понять, как вес ощущается сегодня.</dd>
+          <dt>Как</dt><dd>Один подход на 10 повторений с очень лёгким весом в первом упражнении комплекса. Это не рабочий подход, в план он не засчитывается. Для остальных упражнений не нужен.</dd>
+          <dt>Ошибки</dt><dd>Взять рабочий вес · сделать несколько подводящих подходов и устать до начала</dd>
+        </dl>` },
   ]
 };
 
@@ -630,6 +667,24 @@ const COOLDOWN = {
 let state = { days: {} };
 let todayKey = '';
 let saveTimer = null;
+
+// Свёрнутость блоков — состояние интерфейса, в облако не уезжает.
+// Блок сам закрывается, когда всё внутри отмечено, и сам открывается,
+// если галочку сняли. Ручное открытие/закрытие держится до тех пор,
+// пока блок не сменит «пройденность».
+const blockState = new Map();
+
+function blockOpenState(blockId, allDone) {
+  let st = blockState.get(blockId);
+  if (!st) {
+    st = { open: !allDone, wasDone: allDone };
+    blockState.set(blockId, st);
+  } else if (allDone !== st.wasDone) {
+    st.open = !allDone;
+    st.wasDone = allDone;
+  }
+  return st;
+}
 
 function todaySantiago() {
   const fmt = new Intl.DateTimeFormat('en-US', {
@@ -835,29 +890,26 @@ function render() {
   content.appendChild(frameBlock(WARMUP, entry, leadInName));
 
   complex.blocks.forEach((block, bi) => {
-    const sec = document.createElement('section');
-    sec.className = 'block';
-    sec.innerHTML = `
-      <div class="block-head">
-        <span class="block-num">${bi + 1}</span>
+    const rows = block.exercises.map(ex => checkRow(entry, ex, `
+      <dl>
+        <dt>Мышцы</dt><dd>${ex.muscles}</dd>
+        <dt>Техника</dt><dd>${ex.technique}</dd>
+        <dt>Ошибки</dt><dd>${ex.mistakes}</dd>
+      </dl>
+      ${ex.replacement ? `<div class="replacement"><b>Если занято:</b> ${ex.replacement}</div>` : ''}
+    `));
+    const allDone = block.exercises.every(ex => entry.checked && entry.checked[ex.id]);
+    const rounds = `${block.rounds}${typeof block.rounds === 'number' ? ' круга' : ''}`;
+    content.appendChild(collapsibleBlock({
+      id: `${entry.complex}-${bi}`,
+      allDone,
+      headHtml: `
+        <span class="block-num${allDone ? ' done' : ''}">${allDone ? '✓' : bi + 1}</span>
         <h3>${block.title}</h3>
-        <span class="block-rounds">${block.rounds}${typeof block.rounds === 'number' ? ' круга' : ''}</span>
-      </div>
-      ${block.note ? `<p class="block-note">${block.note}</p>` : ''}
-      <div class="exercises"></div>
-    `;
-    const exWrap = sec.querySelector('.exercises');
-    block.exercises.forEach(ex => {
-      exWrap.appendChild(checkRow(entry, ex, `
-        <dl>
-          <dt>Мышцы</dt><dd>${ex.muscles}</dd>
-          <dt>Техника</dt><dd>${ex.technique}</dd>
-          <dt>Ошибки</dt><dd>${ex.mistakes}</dd>
-        </dl>
-        ${ex.replacement ? `<div class="replacement"><b>Если занято:</b> ${ex.replacement}</div>` : ''}
-      `));
-    });
-    content.appendChild(sec);
+        <span class="block-rounds">${rounds}</span>`,
+      note: block.note,
+      rows
+    }));
   });
 
   content.appendChild(frameBlock(COOLDOWN, entry, leadInName));
@@ -891,22 +943,39 @@ function checkRow(entry, item, detailHtml) {
 
 // Разминка и заминка: обрамляют тренировку, поэтому без номера суперсета
 function frameBlock(block, entry, leadInName) {
-  const sec = document.createElement('section');
-  sec.className = 'block';
-  sec.innerHTML = `
-    <div class="block-head frame">
+  const rows = block.items.map(item => {
+    const shown = item.leadIn ? { ...item, name: `${item.name}: ${leadInName}` } : item;
+    return checkRow(entry, shown, item.detail || '');
+  });
+  const allDone = block.items.every(i => entry.checked && entry.checked[i.id]);
+  return collapsibleBlock({
+    id: block.title,
+    allDone,
+    headClass: 'frame',
+    headHtml: `
       <h3>${block.title}</h3>
-      <span class="block-rounds">${block.meta}</span>
-    </div>
-    ${block.note ? `<p class="block-note">${block.note}</p>` : ''}
+      <span class="block-rounds">${block.meta}</span>`,
+    note: block.note,
+    rows
+  });
+}
+
+// Общая оболочка блока: сворачивается по нажатию на шапку и сама
+// закрывается, когда всё внутри отмечено
+function collapsibleBlock({ id, allDone, headClass = '', headHtml, note, rows }) {
+  const st = blockOpenState(id, allDone);
+  const det = document.createElement('details');
+  det.className = 'block';
+  det.open = st.open;
+  det.innerHTML = `
+    <summary class="block-head ${headClass}${allDone ? ' done' : ''}">${headHtml}${CHEVRON_SVG}</summary>
+    ${note ? `<p class="block-note">${note}</p>` : ''}
     <div class="exercises"></div>
   `;
-  const wrap = sec.querySelector('.exercises');
-  block.items.forEach(item => {
-    const shown = item.leadIn ? { ...item, name: `${item.name}: ${leadInName}` } : item;
-    wrap.appendChild(checkRow(entry, shown, item.detail || ''));
-  });
-  return sec;
+  const wrap = det.querySelector('.exercises');
+  rows.forEach(r => wrap.appendChild(r));
+  det.addEventListener('toggle', () => { st.open = det.open; });
+  return det;
 }
 
 async function init() {
