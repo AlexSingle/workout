@@ -445,6 +445,20 @@ footer.credit {
 <script>
 const FUNCTION_URL = "https://functions.yandexcloud.net/d4eqqcsovv5r9co1cab2";
 const LOCAL_KEY = "workout-state-v1";
+const KEY_STORAGE = "workout-access-key-v1";
+
+// Ключ доступа приходит в якоре ссылки (#k=…) — он не уходит на сервер
+// GitHub Pages и не попадает в Referer. Первый раз сохраняем его локально,
+// дальше страница открывается и без якоря.
+function readAccessKey() {
+  const m = location.hash.match(/(?:^|[#&])k=([A-Za-z0-9_-]+)/);
+  if (m) {
+    try { localStorage.setItem(KEY_STORAGE, m[1]); } catch (e) {}
+    return m[1];
+  }
+  try { return localStorage.getItem(KEY_STORAGE) || ''; } catch (e) { return ''; }
+}
+const accessKey = readAccessKey();
 
 const CHECK_SVG = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8.5L6.2 11.5L13 4.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="stroke:var(--accent-ink)"/></svg>';
 
@@ -608,12 +622,20 @@ function scheduleSave() {
 }
 
 async function pushRemote() {
+  if (!accessKey) {
+    setSyncStatus('Сохранено только на этом устройстве — нет ключа доступа', true);
+    return;
+  }
   try {
     const resp = await fetch(FUNCTION_URL, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Workout-Key': accessKey },
       body: JSON.stringify(state)
     });
+    if (resp.status === 401) {
+      setSyncStatus('Ключ доступа не подходит — сохранено локально', true);
+      return;
+    }
     if (!resp.ok) throw new Error('bad status');
     setSyncStatus('Синхронизировано');
   } catch (e) {
@@ -796,9 +818,25 @@ function render() {
 async function init() {
   const cached = loadLocal();
   if (cached) { state = cached; render(); }
+
+  if (!accessKey) {
+    if (!cached) state = { days: {} };
+    setSyncStatus('Только это устройство — открой ссылку с ключом, чтобы синхронизировать', true);
+    render();
+    saveLocal();
+    return;
+  }
+
   setSyncStatus('Загружаю…');
   try {
-    const resp = await fetch(FUNCTION_URL);
+    const resp = await fetch(FUNCTION_URL, { headers: { 'X-Workout-Key': accessKey } });
+    if (resp.status === 401) {
+      if (!cached) state = { days: {} };
+      setSyncStatus('Ключ доступа не подходит — показаны локальные данные', true);
+      render();
+      saveLocal();
+      return;
+    }
     if (!resp.ok) throw new Error('bad status');
     const remote = await resp.json();
     state = remote && remote.days ? remote : { days: {} };
